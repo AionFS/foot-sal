@@ -39,7 +39,7 @@ body{font-family:'Noto Sans KR',-apple-system,sans-serif;color:var(--tx);max-wid
 .lg-sect{font-size:.64rem;font-weight:700;color:var(--tx2);letter-spacing:.1em;text-transform:uppercase;margin-bottom:8px}
 .srch-wrap{position:relative;margin-bottom:6px}
 .srch-inp{width:100%;padding:13px 42px 13px 15px;background:var(--sf);border:1.5px solid var(--bd2);border-radius:var(--r2);color:#fff;font-family:inherit;outline:none;transition:border-color .2s}
-.srch-inp:focus{border-color:var(--ac)}.srch-inp::placeholder{color:var(--tx3)}
+.srch-inp:focus{border-color:var(--ac);}.srch-inp::placeholder{color:var(--tx3)}
 .srch-ic{position:absolute;right:13px;top:50%;transform:translateY(-50%);color:var(--tx3);pointer-events:none}
 .srch-list{background:var(--sf2);border:1.5px solid var(--bd2);border-radius:var(--r2);max-height:240px;overflow-y:auto;display:none;margin-top:2px}
 .srch-list.show{display:block}
@@ -53,7 +53,7 @@ body{font-family:'Noto Sans KR',-apple-system,sans-serif;color:var(--tx);max-wid
 .admin-big-btn{width:100%;margin-top:14px;padding:14px;background:var(--sf2);border:1.5px solid var(--bd2);border-radius:var(--r2);color:var(--tx2);font-family:inherit;display:flex;align-items:center;justify-content:center;gap:8px;cursor:pointer;transition:all .18s;font-size:.9rem;font-weight:700}
 .admin-big-btn:hover{border-color:rgba(163,230,53,.5);color:var(--ac);background:var(--acbg)}
 /* HEADER */
-.hdr{background:var(--sf);padding:12px 16px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--bd2);flex-shrink:0}
+    .hdr{background:var(--sf);padding:12px 16px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--bd2);flex-shrink:0}
 .hdr-l h1{font-size:.95rem;font-weight:800;letter-spacing:-.02em}
 .hdr-l h1 em{color:var(--ac);font-style:normal}
 .hdr-l small{font-size:.6rem;color:var(--tx3);display:block;margin-top:1px}
@@ -75,13 +75,13 @@ body{font-family:'Noto Sans KR',-apple-system,sans-serif;color:var(--tx);max-wid
 .card{background:var(--sf);border-radius:var(--r);border:1px solid var(--bd2);padding:14px;margin-bottom:9px}
 .clabel{font-size:.62rem;font-weight:700;color:var(--tx2);letter-spacing:.1em;text-transform:uppercase;margin-bottom:9px}
 .fi{width:100%;background:var(--sf2);border:1.5px solid var(--bd2);border-radius:9px;padding:11px 13px;color:#fff;font-family:inherit;outline:none;transition:border-color .2s}
-.fi:focus{border-color:var(--ac)}.fi::placeholder{color:var(--tx3)}
+.fi:focus{border-color:var(--ac)}    .fi::placeholder{color:var(--tx3)}
 select.fi{cursor:pointer}
 .fg{margin-bottom:9px}
 .fl{font-size:.72rem;color:var(--tx2);margin-bottom:5px;font-weight:500}
 .fr2{display:grid;grid-template-columns:1fr 1fr;gap:7px}
 .bp{width:100%;padding:12px;background:var(--ac);border:none;border-radius:9px;color:#000;font-size:.86rem;font-weight:800;cursor:pointer;font-family:inherit}
-.bp:hover{background:var(--ac2)}
+.bp:hover{background:var(--ac2);}
 .bs{width:100%;padding:12px;background:transparent;border:1.5px solid var(--bd2);border-radius:9px;color:var(--tx2);font-size:.86rem;font-weight:600;cursor:pointer;font-family:inherit}
 .brow{display:flex;gap:7px}.brow .bp,.brow .bs{margin-top:0}
 .tag{font-size:.62rem;padding:2px 7px;border-radius:999px;font-weight:700}
@@ -309,8 +309,8 @@ select.fi{cursor:pointer}
     <div class="hdr-r">
       <span class="sdot" id="sdot"></span>
       <button class="hbtn" onclick="doRefresh()">↺</button>
-      <div class="me-pill" id="mbadge">-</div>
       <button class="hbtn" id="abtn" onclick="openModal()" style="display:none">⚙</button>
+      <div class="me-pill" id="mbadge">-</div>
       <button class="hbtn" id="logout-btn" onclick="doLogout()" style="display:none;color:var(--rd);border-color:rgba(248,113,113,.4)">로그아웃</button>
     </div>
   </div>
@@ -567,7 +567,7 @@ function renderHome(){
     }
     var noteS=g.notes?'<div class="gc-sect"><div class="gc-sect-t">📌 참고사항</div><div class="gc-note">'+esc(g.notes)+'</div></div>':'';
     ghtml='<div class="gc"><div class="gc-venue">'+esc(g.venue)+'</div>'+
-      (g.dayOfWeek!==undefined?'<div class="gc-sect"><div class="gc-sect-t">📅 일정</div><div class="gc-row">'+DAYS[g.dayOfWeek]+'요일 '+esc(g.time||'')+'</div></div>':'')+
+      (g.dayOfWeek!==undefined?'<div class="gc-sect"><div class="gc-sect-t">📅 일정</div><div class="gc-row">'+actDk()+' ('+DAYS[g.dayOfWeek]+'요일) '+esc(g.time||'')+'</div></div>':'')+
       addrLinks+noteS+'</div>';
   }
   // 홈 현황: 정규멤버만 (용병 제외), ㄱㄴㄷ
@@ -590,7 +590,7 @@ function renderHome(){
 function renderAtt(){
   var g=actGame();
   var mini=g&&g.venue?'<div class="att-game-card"><div class="agc-venue">'+esc(g.venue)+'</div>'+
-    (g.dayOfWeek!==undefined?'<div class="agc-row"><span>📅</span>'+DAYS[g.dayOfWeek]+'요일 '+esc(g.time||'')+'</div>':'')+
+    (g.dayOfWeek!==undefined?'<div class="agc-row"><span>📅</span>'+actDk()+' ('+DAYS[g.dayOfWeek]+'요일) '+esc(g.time||'')+'</div>':'')+
     (g.address?'<div class="agc-row"><span>📍</span><span style="word-break:break-all">'+esc(g.address)+'</span></div>':'')+
     '</div>':'';
   var vstatus=getVoteSt();var dl=actDl();var banHtml='';
@@ -952,7 +952,7 @@ function renderAdminTab0(){
     var isActive=adk()===actDk();
     html+='<div class="slabel">선택 날짜 경기 정보</div><div class="admin-game-view">'+
       '<div class="agv-venue">'+esc(g.venue)+'</div>'+
-      agvRow('요일/시간',DAYS[S.adminDate.getDay()]+'요일 '+esc(g.time||''))+
+      agvRow('날짜',adk()+' ('+DAYS[S.adminDate.getDay()]+'요일) '+esc(g.time||''))+
       (g.address?agvRow('주소',esc(g.address)):'')+
       (g.mapUrl?agvRow('지도URL','<a href="'+esc(g.mapUrl)+'" target="_blank" style="color:var(--ac)">링크 열기</a>'):'')+
       agvRow('구장비',Number(g.venueFee||0).toLocaleString()+'원')+
@@ -1045,7 +1045,7 @@ function renderAdminTab1(){
   var vfee=Number(g.venueFee||0);var dfee=Number(g.drinkFee||0);
   html+='<div class="admin-game-view" style="margin-bottom:9px">'+
     '<div class="agv-venue">'+esc(g.venue)+'</div>'+
-    agvRow('날짜/시간',DAYS[S.adminDate.getDay()]+'요일 '+esc(g.time||''))+
+    agvRow('날짜',adk()+' ('+DAYS[S.adminDate.getDay()]+'요일) '+esc(g.time||''))+
     (g.address?agvRow('주소',esc(g.address)):'')+
     agvRow('구장비',vfee.toLocaleString()+'원'+(dfee>0?' + 음료 '+dfee.toLocaleString():''))+
     '</div>';
@@ -1346,46 +1346,43 @@ async function changePw(){
 // ── 경기 저장/복사 ──
 function openHistModal(){
   if(!S.gameHistory||!S.gameHistory.length){toast('저장된 이전 경기가 없습니다');return;}
-  // 중복 제거: 같은 venue+address는 가장 최신 것만 표시
-  var seen={};var deduped=S.gameHistory.slice().reverse().filter(function(gh){
-    var key=(gh.venue||'')+'|'+(gh.address||'');
-    if(seen[key])return false;seen[key]=true;return true;
-  });
   var list=document.getElementById('hist-list');
-  list.innerHTML=deduped.map(function(gh){
+  var sorted=S.gameHistory.slice().reverse();
+  list.innerHTML=sorted.map(function(gh,i){
+    var realIdx=S.gameHistory.length-1-i;
     var dateStr=gh.savedAt?new Date(gh.savedAt).toLocaleDateString('ko-KR',{month:'numeric',day:'numeric'}):'';
-    return'<div class="hist-item" onclick="pickHist(\''+gh.id+'\')">'+
+    return'<div class="hist-item" onclick="pickHistByIdx('+realIdx+')">'+
       '<div class="hist-item-info">'+
       '<p>'+esc(gh.venue||'구장명 없음')+'</p>'+
-      '<p>'+esc(gh.time||'')+(gh.address?' · '+esc(gh.address.substring(0,18)):'')+(dateStr?' · '+dateStr:'')+'</p>'+
+      '<p>'+esc(gh.time||'')+(gh.address?' · '+esc(gh.address.substring(0,20)):'')+(dateStr?' · '+dateStr:'')+'</p>'+
       '</div><span style="font-size:.76rem;color:var(--ac);font-weight:700">선택 →</span></div>';
   }).join('');
   document.getElementById('hist-modal').style.display='flex';
 }
 function closeHist(){document.getElementById('hist-modal').style.display='none';}
-function pickHist(ghId){
-  var gh=S.gameHistory.find(function(h){return String(h.id)===String(ghId)});
+function pickHistByIdx(idx){
+  var gh=S.gameHistory[idx];
   if(!gh){toast('이전 경기를 찾을 수 없습니다');closeHist();return;}
   closeHist();
-  // forceNewForm=true → 기존 경기 있어도 새 등록 폼 강제 표시
   S.adminTab=0;S.editingGame=false;S.forceNewForm=true;
   renderAdmin();
-  // 폼이 이제 반드시 DOM에 있음 - 바로 채우기
   setTimeout(function(){
-    var set=function(eid,v){
-      var el=document.getElementById(eid);
-      if(el)el.value=(v!=null&&v!==undefined)?String(v):'';
-    };
-    set('g-v',  gh.venue);
-    set('g-a',  gh.address);
-    set('g-m',  gh.mapUrl);
-    set('g-vf', gh.venueFee);
-    set('g-df', gh.drinkFee);
-    set('g-n',  gh.notes);
+    var set=function(eid,v){var el=document.getElementById(eid);if(el)el.value=(v!=null&&v!==undefined)?String(v):'';};
+    set('g-v', gh.venue);
+    set('g-a', gh.address);
+    set('g-m', gh.mapUrl);
+    set('g-vf',gh.venueFee);
+    set('g-df',gh.drinkFee);
+    set('g-n', gh.notes);
     var tEl=document.getElementById('g-t');
     if(tEl&&gh.time)tEl.value=gh.time;
-    toast(esc(gh.venue||'구장')+'정보를 불러왔어요!');
-  },50);
+    toast('불러왔어요: '+esc(gh.venue||''));
+  },80);
+}
+function pickHist(ghId){
+  var idx=S.gameHistory.findIndex(function(h){return String(h.id)===String(ghId);});
+  if(idx>=0)pickHistByIdx(idx);
+  else{toast('이전 경기를 찾을 수 없습니다');closeHist();}
 }
 async function saveGame(){
   function gv(id){var el=document.getElementById(id);return el?el.value.trim():'';}
