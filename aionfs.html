@@ -66,7 +66,7 @@ body{font-family:'Noto Sans KR',-apple-system,sans-serif;color:var(--tx);max-wid
 /* NAV */
 .content{flex:1;overflow-y:auto;padding-bottom:70px}
 .tab{display:none;padding:12px}.tab.on{display:block}
-.bnav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:430px;background:#0d1510;border-top:1px solid var(--bd2);display:flex;z-index:9999;will-change:transform;-webkit-transform:translateX(-50%);}
+.bnav{position:fixed;bottom:0;left:0;right:0;background:#0d1510;border-top:1px solid var(--bd2);display:flex;z-index:9999;max-width:430px;margin-left:auto;margin-right:auto;}
 .nb{flex:1;padding:8px 0 11px;display:flex;flex-direction:column;align-items:center;gap:2px;background:transparent;border:none;cursor:pointer;color:var(--tx3);font-size:.52rem;font-weight:500;font-family:inherit;position:relative}
 .nb.on{color:var(--ac)}
 .nb.on::before{content:'';position:absolute;top:0;left:50%;transform:translateX(-50%);width:14px;height:2px;background:var(--ac);border-radius:999px}
@@ -497,12 +497,18 @@ function onSrch(q){
 }
 function selMember(id){
   S.myId=id;ls('myId',id);
+  // 항상 홈 탭으로 시작
+  S.tab='home';S.adminTab=0;S.isAdmin=false;S.editingGame=false;S.forceNewForm=false;
   document.getElementById('srch-list').classList.remove('show');
   var el=document.getElementById('srch');if(el)el.value='';
   showMain();
 }
 // ─── MAIN ───
 function showMain(){
+  // 모든 탭 비활성화 후 홈만 활성화
+  document.querySelectorAll('.tab').forEach(function(el){el.classList.remove('on');});
+  var homeTab=document.getElementById('tab-home');
+  if(homeTab)homeTab.classList.add('on');
   document.getElementById('sl').classList.remove('on');
   document.getElementById('sm').classList.add('on');
   updateHdr();renderBnav();renderAll();startPoll();startCd();
@@ -511,7 +517,7 @@ function updateHdr(){
   var me=S.regularMembers.find(function(m){return m.id===S.myId});
   document.getElementById('mbadge').textContent=(me?me.name:'관리자')+(S.isAdmin?' ★':'');
   document.getElementById('abtn').style.display=S.isAdmin?'none':'';
-  var lob=document.getElementById('logout-btn');if(lob)lob.style.display=S.isAdmin?'':'none';
+  var lob=document.getElementById('logout-btn');if(lob)lob.style.display='';  // 항상 표시
   var g=actGame();
   if(g&&g.dayOfWeek!==undefined)document.getElementById('hsub').textContent='매주 '+DAYS[g.dayOfWeek]+'요일 정기 풋살';
 }
@@ -689,8 +695,10 @@ function renderFee(){
   var vfee=Number((g&&g.venueFee)||0);var dfee=Number((g&&g.drinkFee)||0);
   var finalised=actFinalised();
   var av=actVotes();var gm=actGM();
+  // 전체 참석자(정규+용병) 기준 1/N
+  var attAll=actGM().filter(function(m){return(av[m.id]||{}).status==='attend'});
   var attReg=S.regularMembers.filter(function(m){return(av[m.id]||{}).status==='attend'});
-  var fee=finalised&&attReg.length>0?Math.ceil((vfee+dfee)/attReg.length/100)*100:0;
+  var fee=finalised&&attAll.length>0?Math.ceil((vfee+dfee)/attAll.length/100)*100:0;
   var hero='<div class="fee-hero">';
   if(!finalised){
     hero+='<p style="font-size:.82rem;color:var(--am);font-weight:700;margin-bottom:6px">⏳ 마감 확정 전</p>'+
@@ -698,7 +706,7 @@ function renderFee(){
   } else {
     hero+='<p style="font-size:.7rem;color:#aaa;margin-bottom:5px">이번주 1인당 회비</p>'+
       '<div class="fa">'+fee.toLocaleString()+'<span class="fu">원</span></div>'+
-      '<p class="fsub">정규 참석 '+attReg.length+'명 기준</p>'+
+      '<p class="fsub">전체 참석 '+attAll.length+'명 기준'+(attAll.length!==attReg.length?' (정규 '+attReg.length+'+용병 '+(attAll.length-attReg.length)+')':'')+'</p>'+
       '<div class="fbreak"><div class="frow"><span>구장비</span><span>'+vfee.toLocaleString()+'원</span></div>'+
       (dfee>0?'<div class="frow"><span>음료비</span><span>'+dfee.toLocaleString()+'원</span></div>':'')+
       '<div class="frow tot"><span>1인 부담</span><span>'+fee.toLocaleString()+'원</span></div></div>'+
@@ -752,19 +760,38 @@ function renderTeams(){
         '<p style="color:#aaa;font-size:.84rem">관리자가 팀 편성 중입니다</p></div>';
       return;
     }
-    // 개인 보기: 팀 결과만 표시 (수정 불가)
+    // 개인 보기: 팀 결과 + 내 팀 강조 배너
     var clsCols=['bl','rd','gn2'],ics=['🔵','🔴','🟢'],tmNms=['A팀','B팀','C팀'];
     var tms=[teams.A||[],teams.B||[],teams.C||[]];
-    var thtml='<p style="font-size:.7rem;color:var(--gn);text-align:center;margin-bottom:10px;font-weight:700">✓ 팀 편성 완료</p>';
+    // 내 팀 찾기
+    var myTeamIdx=-1,myTeamNo=-1;
+    for(var ti=0;ti<nm;ti++){
+      var pos=tms[ti].findIndex(function(m){return m.id===S.myId;});
+      if(pos>=0){myTeamIdx=ti;myTeamNo=pos+1;break;}
+    }
+    var thtml='';
+    // 내 팀 배너
+    if(myTeamIdx>=0){
+      var mc=myTeamIdx===0?'var(--bl)':myTeamIdx===1?'var(--rd)':'var(--gn)';
+      var mbg=myTeamIdx===0?'rgba(96,165,250,.12)':myTeamIdx===1?'rgba(248,113,113,.12)':'rgba(52,211,153,.12)';
+      thtml+='<div style="background:'+mbg+';border:2px solid '+mc+';border-radius:var(--r);padding:18px;text-align:center;margin-bottom:12px">'+
+        '<p style="font-size:.72rem;color:#aaa;margin-bottom:6px">내 팀</p>'+
+        '<p style="font-size:2rem;font-weight:900;color:'+mc+';letter-spacing:-.02em">'+ics[myTeamIdx]+' '+tmNms[myTeamIdx]+'</p>'+
+        '<p style="font-size:1.1rem;font-weight:800;color:#fff;margin-top:4px">'+myTeamNo+'번</p>'+
+        '</div>';
+    }
+    thtml+='<p style="font-size:.7rem;color:var(--gn);text-align:center;margin-bottom:10px;font-weight:700">✓ 전체 팀 편성</p>';
     thtml+='<div class="tgrid '+(nm===2?'tg2':'tg3')+'">';
     for(var i=0;i<nm;i++){(function(idx){
       var lt='ABC'[idx];
       thtml+='<div class="tcol '+clsCols[idx]+'"><div class="tcol-t">'+ics[idx]+' '+tmNms[idx]+' ('+tms[idx].length+')</div>';
-      thtml+=tms[idx].map(function(m){
-        var rmT=S.regularMembers.find(function(r){return r.id===m.id});
+      thtml+=tms[idx].map(function(m,mIdx){
+        var rmT=S.regularMembers.find(function(r){return r.id===m.id;});
         var gC=rmT&&rmT.gender==='남'?'var(--bl)':rmT&&rmT.gender==='여'?'var(--rd)':'#888';
         var gT=rmT&&rmT.gender?'('+rmT.gender+')':'';
-        return'<div class="tpl"><span>'+esc(m.name)+'<span style="font-size:.62rem;color:'+gC+';margin-left:3px">'+gT+'</span></span></div>';
+        var isMe=m.id===S.myId;
+        var num='<span style="font-size:.62rem;color:#888;min-width:16px;display:inline-block">'+(mIdx+1)+'.</span>';
+        return'<div class="tpl'+(isMe?' me':'')+'">'+num+'<span style="flex:1'+(isMe?';color:var(--ac);font-weight:800':'')+'">'+esc(m.name)+'<span style="font-size:.62rem;color:'+gC+';margin-left:3px">'+gT+'</span></span></div>';
       }).join('');
       thtml+='</div>';
     })(i);}
@@ -811,13 +838,14 @@ function renderTeams(){
     for(var i=0;i<nm;i++){(function(idx){
       var lt='ABC'[idx];
       thtml+='<div class="tcol '+clsCols[idx]+'"><div class="tcol-t">'+ics[idx]+' '+tmNms[idx]+' ('+tms[idx].length+')</div>';
-      thtml+=tms[idx].map(function(m){
+      thtml+=tms[idx].map(function(m,mIdx){
         var oth=[];for(var j=0;j<nm;j++){if('ABC'[j]!==lt)oth.push('ABC'[j]);}
         var mvs=oth.map(function(o){return'<button class="mvbtn" onclick="mvPl('+m.id+',\''+lt+'\',\''+o+'\')">→'+o+'</button>';}).join('');
         var rmT=S.regularMembers.find(function(r){return r.id===m.id});
         var gC=rmT&&rmT.gender==='남'?'var(--bl)':rmT&&rmT.gender==='여'?'var(--rd)':'#888';
         var gT=rmT&&rmT.gender?'('+rmT.gender+')':'';
-        return'<div class="tpl"><span>'+esc(m.name)+'<span style="font-size:.62rem;color:'+gC+';margin-left:3px">'+gT+'</span></span><div style="display:flex;gap:2px">'+mvs+'</div></div>';
+        var num='<span style="font-size:.62rem;color:#888;min-width:16px;display:inline-block">'+(mIdx+1)+'.</span>';
+        return'<div class="tpl">'+num+'<span style="flex:1">'+esc(m.name)+'<span style="font-size:.62rem;color:'+gC+';margin-left:3px">'+gT+'</span></span><div style="display:flex;gap:2px">'+mvs+'</div></div>';
       }).join('');
       thtml+='</div>';
     })(i);}
@@ -1028,19 +1056,20 @@ function renderAdminTab1(){
   var attCnt=gm.filter(function(m){return(av[m.id]||{}).status==='attend'}).length;
   var absCnt=gm.filter(function(m){return(av[m.id]||{}).status==='absent'}).length;
   var norCnt=gm.length-attCnt-absCnt;
+  var attAllCnt=gm.filter(function(m){return(av[m.id]||{}).status==='attend'}).length;
   var attReg=S.regularMembers.filter(function(m){return(av[m.id]||{}).status==='attend'}).length;
-  var estFee=attReg>0?Math.ceil((vfee+dfee)/attReg/100)*100:0;
+  var estFee=attAllCnt>0?Math.ceil((vfee+dfee)/attAllCnt/100)*100:0;
   // 마감 확정 버튼
   if(!finalised){
     html+='<div style="background:var(--ambg);border:1px solid rgba(251,191,36,.25);border-radius:var(--r);padding:13px 15px;margin-bottom:9px;display:flex;align-items:center;justify-content:space-between">'+
       '<div><p style="font-size:.82rem;font-weight:700;color:var(--am)">마감 전</p>'+
-      '<p style="font-size:.68rem;color:#aaa;margin-top:2px">정규 '+attReg+'명 · 예상 '+estFee.toLocaleString()+'원/명</p></div>'+
+      '<p style="font-size:.68rem;color:#aaa;margin-top:2px">전체 '+attAllCnt+'명(정규 '+attReg+') · 예상 '+estFee.toLocaleString()+'원/명</p></div>'+
       '<button style="padding:9px 14px;background:var(--ac);border:none;border-radius:9px;color:#000;font-size:.78rem;font-weight:800;cursor:pointer;font-family:inherit" onclick="setFinalised(true)">마감 확정</button>'+
       '</div>';
   } else {
     html+='<div style="background:var(--gnbg);border:1px solid rgba(52,211,153,.25);border-radius:var(--r);padding:13px 15px;margin-bottom:9px;display:flex;align-items:center;justify-content:space-between">'+
       '<div><p style="font-size:.82rem;font-weight:700;color:var(--gn)">✓ 마감 확정됨</p>'+
-      '<p style="font-size:.68rem;color:#aaa;margin-top:2px">정규 '+attReg+'명 · 1인 '+estFee.toLocaleString()+'원</p></div>'+
+      '<p style="font-size:.68rem;color:#aaa;margin-top:2px">전체 '+attAllCnt+'명 · 1인 '+estFee.toLocaleString()+'원</p></div>'+
       '<button style="padding:9px 14px;background:transparent;border:1.5px solid rgba(248,113,113,.4);border-radius:9px;color:var(--rd);font-size:.76rem;font-weight:700;cursor:pointer;font-family:inherit" onclick="setFinalised(false)">취소</button>'+
       '</div>';
   }
@@ -1471,11 +1500,21 @@ function tryLogin(){
 }
 function doRefresh(){loadAll().then(function(){renderAll();renderLogin();toast('새로고침 완료');});}
 function doLogout(){
+  // 세션 상태만 초기화 (localStorage myId는 유지 → 마지막 접속 카드 표시)
   S.isAdmin=false;
-  // 완전 초기화 - 로그인 화면으로
+  S.myId=null;
+  S.tab='home';
+  S.adminTab=0;
+  S.editingGame=false;
+  S.forceNewForm=false;
+  S.selGender='';
+  // 폴링/타이머 멈춤
+  if(pollTmr){clearInterval(pollTmr);pollTmr=null;}
+  if(cdTmr){clearInterval(cdTmr);cdTmr=null;}
+  lastPoll='';
+  // 화면 전환
   document.getElementById('sm').classList.remove('on');
   document.getElementById('sl').classList.add('on');
-  S.myId=null;S.tab='home';S.adminTab=0;
   renderLogin();
   toast('로그아웃 됐습니다');
 }
